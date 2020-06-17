@@ -30,7 +30,7 @@ abstract class Application
         'curl' => [
             CURLOPT_USERAGENT => 'XeroPHP',
             CURLOPT_CONNECTTIMEOUT => 30,
-            CURLOPT_TIMEOUT => 20,
+            CURLOPT_TIMEOUT => 60,
             CURLOPT_SSL_VERIFYPEER => 2,
             CURLOPT_SSL_VERIFYHOST => 2,
             CURLOPT_FOLLOWLOCATION => false,
@@ -93,7 +93,7 @@ abstract class Application
      */
     public function getConfig($key)
     {
-        if (! isset($this->config[$key])) {
+        if (!isset($this->config[$key])) {
             throw new Exception("Invalid configuration key [{$key}]");
         }
 
@@ -111,7 +111,7 @@ abstract class Application
      */
     public function getConfigOption($config, $option)
     {
-        if (! isset($this->getConfig($config)[$option])) {
+        if (!isset($this->getConfig($config)[$option])) {
             throw new Exception("Invalid configuration option [{$option}]");
         }
 
@@ -145,7 +145,7 @@ abstract class Application
      */
     public function setConfigOption($config, $option, $value)
     {
-        if (! isset($this->config[$config])) {
+        if (!isset($this->config[$config])) {
             throw new Exception("Invalid configuration key [{$config}]");
         }
         $this->config[$config][$option] = $value;
@@ -170,7 +170,7 @@ abstract class Application
 
         $class = $this->prependConfigNamespace($class);
 
-        if (! class_exists($class)) {
+        if (!class_exists($class)) {
             throw new Exception("Class does not exist [{$class}]");
         }
 
@@ -186,7 +186,7 @@ abstract class Application
      */
     protected function prependConfigNamespace($class)
     {
-        return $this->getConfig('xero')['model_namespace'].'\\'.$class;
+        return $this->getConfig('xero')['model_namespace'] . '\\' . $class;
     }
 
     /**
@@ -224,8 +224,6 @@ abstract class Application
 
             return $object;
         }
-
-        
     }
 
     /**
@@ -294,7 +292,7 @@ abstract class Application
         //(special saving endpoints)
         $this->savePropertiesDirectly($object);
 
-        if (! $object->isDirty()) {
+        if (!$object->isDirty()) {
             return;
         }
         $object->validate();
@@ -310,7 +308,7 @@ abstract class Application
             $object->setApplication($this);
         }
 
-        if (! $object::supportsMethod($method)) {
+        if (!$object::supportsMethod($method)) {
             throw new Exception(sprintf('%s doesn\'t support [%s] via the API', get_class($object), $method));
         }
 
@@ -447,7 +445,7 @@ abstract class Application
      */
     public function delete(Remote\Model $object)
     {
-        if (! $object::supportsMethod(Request::METHOD_DELETE)) {
+        if (!$object::supportsMethod(Request::METHOD_DELETE)) {
             throw new Exception(
                 sprintf(
                     '%s doesn\'t support [DELETE] via the API',
