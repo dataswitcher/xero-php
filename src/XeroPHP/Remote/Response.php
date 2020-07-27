@@ -88,7 +88,7 @@ class Response
         switch ($this->status) {
             case self::STATUS_BAD_REQUEST:
                 //This catches actual app errors
-                if (isset($this->root_error) && ! empty($this->root_error)) {
+                if (isset($this->root_error) && !empty($this->root_error)) {
                     $message = sprintf('%s (%s)', $this->root_error['message'], implode(', ', $this->element_errors));
                     $message .= $this->parseBadRequest();
 
@@ -98,14 +98,14 @@ class Response
                 throw new BadRequestException();
 
 
-            /** @noinspection PhpMissingBreakStatementInspection */
-            // no break
+                /** @noinspection PhpMissingBreakStatementInspection */
+                // no break
             case self::STATUS_UNAUTHORISED:
                 //This is where OAuth errors end up, this could maybe change to an OAuth exception
                 if (isset($this->oauth_response['oauth_problem_advice'])) {
                     throw new UnauthorizedException($this->oauth_response['oauth_problem_advice']);
                 }
-           
+
                 $response = urldecode($this->response_body);
                 if (false !== stripos($response, 'You are not permitted to access this resource without the reporting role or higher privileges')) {
                     throw new ReportPermissionMissingException();
@@ -146,7 +146,7 @@ class Response
      */
     private function parseBadRequest()
     {
-        if (! empty($this->elements)) {
+        if (!empty($this->elements)) {
             $field_errors = [];
             foreach ($this->elements as $n => $element) {
                 if (isset($element['ValidationErrors'])) {
@@ -154,7 +154,7 @@ class Response
                 }
             }
 
-            return "\nValidation errors:\n".implode("\n", $field_errors);
+            return "\nValidation errors:\n" . implode("\n", $field_errors);
         }
 
         if (isset($this->oauth_response['oauth_problem_advice'])) {
@@ -184,8 +184,6 @@ class Response
         if (isset($this->element_errors[$element_id])) {
             return $this->element_errors[$element_id];
         }
-
-        
     }
 
     public function getElementErrors()
@@ -196,6 +194,11 @@ class Response
     public function getElementWarnings()
     {
         return $this->element_warnings;
+    }
+
+    public function getHeaders()
+    {
+        return $this->headers;
     }
 
     public function getRootError()
