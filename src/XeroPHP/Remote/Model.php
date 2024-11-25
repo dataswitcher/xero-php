@@ -336,7 +336,7 @@ abstract class Model implements ObjectInterface, \JsonSerializable, \ArrayAccess
             case self::PROPERTY_TYPE_BOOLEAN:
                 return in_array(strtolower($value), ['true', '1', 'yes'], true);
 
-            /** @noinspection PhpMissingBreakStatementInspection */
+                /** @noinspection PhpMissingBreakStatementInspection */
             case self::PROPERTY_TYPE_TIMESTAMP:
                 $timezone = new \DateTimeZone('UTC');
 
@@ -485,8 +485,6 @@ abstract class Model implements ObjectInterface, \JsonSerializable, \ArrayAccess
         }
 
         trigger_error(sprintf("Undefined property %s::$%s.\n", __CLASS__, $property));
-
-        
     }
 
     /**
@@ -506,8 +504,6 @@ abstract class Model implements ObjectInterface, \JsonSerializable, \ArrayAccess
         }
 
         trigger_error(sprintf("Undefined property %s::$%s.\n", __CLASS__, $property));
-
-        
     }
 
     protected function propertyUpdated($property, $value)
@@ -543,7 +539,7 @@ abstract class Model implements ObjectInterface, \JsonSerializable, \ArrayAccess
      *
      * @return string
      */
-    public function jsonSerialize()
+    public function jsonSerialize(): array
     {
         return $this->toStringArray();
     }
@@ -553,7 +549,7 @@ abstract class Model implements ObjectInterface, \JsonSerializable, \ArrayAccess
      *
      * @return bool
      */
-    public function offsetExists($offset)
+    public function offsetExists($offset): bool
     {
         return $this->__isset($offset);
     }
@@ -563,7 +559,7 @@ abstract class Model implements ObjectInterface, \JsonSerializable, \ArrayAccess
      *
      * @return mixed
      */
-    public function offsetGet($offset)
+    public function offsetGet($offset): bool
     {
         return $this->__get($offset);
     }
@@ -572,17 +568,17 @@ abstract class Model implements ObjectInterface, \JsonSerializable, \ArrayAccess
      * @param mixed $offset
      * @param mixed $value
      *
-     * @return mixed
+     * @return void
      */
-    public function offsetSet($offset, $value)
+    public function offsetSet(mixed $offset, mixed $value): void
     {
-        return $this->__set($offset, $value);
+        $this->__set($offset, $value);
     }
 
     /**
      * @param mixed $offset
      */
-    public function offsetUnset($offset)
+    public function offsetUnset($offset): void
     {
         unset($this->_data[$offset]);
     }
