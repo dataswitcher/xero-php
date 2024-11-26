@@ -559,7 +559,7 @@ abstract class Model implements ObjectInterface, \JsonSerializable, \ArrayAccess
      *
      * @return mixed
      */
-    public function offsetGet($offset): bool
+    public function offsetGet($offset): mixed
     {
         return $this->__get($offset);
     }
