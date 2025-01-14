@@ -96,8 +96,8 @@ class Response
                 throw new BadRequestException();
 
 
-            /** @noinspection PhpMissingBreakStatementInspection */
-            // no break
+                /** @noinspection PhpMissingBreakStatementInspection */
+                // no break
             case self::STATUS_UNAUTHORISED:
                 //This is where OAuth errors end up, this could maybe change to an OAuth exception
                 if (isset($this->oauth_response['oauth_problem_advice'])) {
@@ -105,8 +105,10 @@ class Response
                 }
 
                 $response = urldecode($this->response_body);
-                if (false !== stripos($response,
-                        'You are not permitted to access this resource without the reporting role or higher privileges')) {
+                if (false !== stripos(
+                    $response,
+                    'You are not permitted to access this resource without the reporting role or higher privileges'
+                )) {
                     throw new ReportPermissionMissingException();
                 }
                 throw new ForbiddenException();
@@ -219,7 +221,7 @@ class Response
 
         //Iterate in priority order
         foreach ($this->headers[Request::HEADER_CONTENT_TYPE] as $ct) {
-            list($content_type) = explode(';', $ct);
+            list($content_type) = explode(';', $ct ?? '');
 
             switch ($content_type) {
                 case Request::CONTENT_TYPE_XML:
@@ -237,7 +239,6 @@ class Response
                 default:
                     //Try the next content type
                     continue 2;
-
             }
 
             foreach ($this->elements as $index => $element) {
