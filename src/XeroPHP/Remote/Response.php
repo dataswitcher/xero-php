@@ -38,13 +38,13 @@ class Response
 
     const STATUS_ORGANISATION_OFFLINE = 503;
 
+    const STATUS_TOO_MANY_REQUESTS = 429;
+
     private $request;
 
     private $headers;
 
     private $status;
-
-    private $content_type;
 
     private $response_body;
 
@@ -58,13 +58,13 @@ class Response
 
     private $root_error;
 
-    public function __construct(Request $request, $response_body, array $curl_info, $headers)
+    public function __construct(Request $request, $response_body, $status, $headers)
     {
         $this->request = $request;
         $this->response_body = $response_body;
-        $this->status = $curl_info['http_code'];
+        $this->status = $status;
         $this->headers = $headers;
-
+      
         list($this->content_type) = explode(';', $curl_info['content_type'] ?? '');
     }
 
@@ -107,7 +107,8 @@ class Response
                 }
 
                 $response = urldecode($this->response_body);
-                if (false !== stripos($response, 'You are not permitted to access this resource without the reporting role or higher privileges')) {
+                if (false !== stripos($response,
+                        'You are not permitted to access this resource without the reporting role or higher privileges')) {
                     throw new ReportPermissionMissingException();
                 }
                 throw new ForbiddenException();
@@ -121,6 +122,9 @@ class Response
             case self::STATUS_NOT_IMPLEMENTED:
                 throw new NotImplementedException();
 
+            case self::STATUS_TOO_MANY_REQUESTS:
+                throw RateLimitExceededException::createFromHeaders($this->headers);
+
             case self::STATUS_NOT_AVAILABLE:
             case self::STATUS_RATE_LIMIT_EXCEEDED:
             case self::STATUS_ORGANISATION_OFFLINE:
@@ -130,11 +134,7 @@ class Response
                     throw new OrganisationOfflineException();
                 }
                 if (false !== stripos($response, 'Rate limit exceeded')) {
-                    $problem = isset($this->headers['x-rate-limit-problem']) ? current($this->headers['x-rate-limit-problem']) : null;
-                    $exception = new RateLimitExceededException();
-                    $exception->setRateLimitProblem($problem);
-
-                    throw $exception;
+                    throw RateLimitExceededException::createFromHeaders($this->headers);
                 }
 
                 throw new NotAvailableException();
@@ -143,6 +143,7 @@ class Response
 
     /**
      * @return string
+     * @throws UnauthorizedException
      */
     private function parseBadRequest()
     {
@@ -213,47 +214,52 @@ class Response
 
     public function parseBody()
     {
-        if ($this->request->getUrl()->isOAuth()) {
-            $this->parseHTML();
-
-            return;
-        }
-
         $this->elements = [];
         $this->element_errors = [];
         $this->element_warnings = [];
         $this->root_error = [];
 
-        switch ($this->content_type) {
-            case Request::CONTENT_TYPE_XML:
-                $this->parseXML();
-
-                break;
-
-            case Request::CONTENT_TYPE_JSON:
-                $this->parseJSON();
-
-                break;
-
-            case Request::CONTENT_TYPE_HTML:
-                $this->parseHTML();
-
-                break;
-
-            default:
-                //Don't try to parse anything else.
-                return;
+        if (!isset($this->headers[Request::HEADER_CONTENT_TYPE])) {
+            //Nothing to parse
+            return;
         }
 
-        foreach ($this->elements as $index => $element) {
-            $this->findElementErrors($element, $index);
+        //Iterate in priority order
+        foreach ($this->headers[Request::HEADER_CONTENT_TYPE] as $ct) {
+            list($content_type) = explode(';', $ct);
+
+            switch ($content_type) {
+                case Request::CONTENT_TYPE_XML:
+                    $this->parseXML();
+                    break;
+
+                case Request::CONTENT_TYPE_JSON:
+                    $this->parseJSON();
+                    break;
+
+                case Request::CONTENT_TYPE_HTML:
+                    $this->parseHTML();
+                    break;
+
+                default:
+                    //Try the next content type
+                    continue 2;
+
+            }
+
+            foreach ($this->elements as $index => $element) {
+                $this->findElementErrors($element, $index);
+            }
+
+            //A matching content-type was found, break the foreach
+            break;
         }
     }
 
     public function findElementErrors($element, $element_index)
     {
         foreach ($element as $property => $value) {
-            switch ((string) $property) {
+            switch ((string)$property) {
                 case 'ValidationErrors':
                     if (is_array($value)) {
                         foreach ($value as $error) {
@@ -289,15 +295,15 @@ class Response
         foreach ($sxml as $child_index => $root_child) {
             switch ($child_index) {
                 case 'ErrorNumber':
-                    $this->root_error['code'] = (string) $root_child;
+                    $this->root_error['code'] = (string)$root_child;
 
                     break;
                 case 'Type':
-                    $this->root_error['type'] = (string) $root_child;
+                    $this->root_error['type'] = (string)$root_child;
 
                     break;
                 case 'Message':
-                    $this->root_error['message'] = (string) $root_child;
+                    $this->root_error['message'] = (string)$root_child;
 
                     break;
                 case 'Payslip':

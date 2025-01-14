@@ -2,18 +2,21 @@
 
 namespace XeroPHP;
 
-use XeroPHP\Remote\URL;
+use GuzzleHttp\Client;
+use GuzzleHttp\ClientInterface;
+use XeroPHP\Remote\Collection;
 use XeroPHP\Remote\Query;
 use XeroPHP\Remote\Request;
-use XeroPHP\Remote\Collection;
-use XeroPHP\Remote\OAuth\Client;
+use XeroPHP\Remote\URL;
 
-abstract class Application
+class Application
 {
+    const USER_AGENT_STRING = 'XeroPHP/%s (+https://github.com/calcinai/xero-php)';
+
     protected static $_config_defaults = [
         'xero' => [
-            'site' => 'https://api.xero.com',
-            'base_url' => 'https://api.xero.com',
+            'base_url' => 'https://api.xero.com/',
+
             'core_version' => '2.0',
             'payroll_version' => '1.0',
             'file_version' => '1.0',
@@ -46,43 +49,30 @@ abstract class Application
     protected $config;
 
     /**
-     * @var Client
+     * @var ClientInterface
      */
-    protected $oauth_client;
+    private $transport;
 
     /**
-     * @var array
+     * @param $token
+     * @param $tenantId
      */
-    protected static $_type_config_defaults = [];
-
-    /**
-     * @param array $config
-     */
-    public function __construct(array $config)
+    public function __construct($token, $tenantId)
     {
-        //better here for overriding
-        $this->setConfig($config);
+        $this->config = static::$_config_defaults;
 
-        $this->oauth_client = new Client($this->config['oauth']);
+        //Not sure if this is necessary, but it's one less thing to have to create outside the instance.
+        $transport = new Client([
+            'headers' => [
+                'User-Agent' => sprintf(static::USER_AGENT_STRING, Helpers::getPackageVersion()),
+                'Authorization' => sprintf('Bearer %s', $token),
+                'Xero-tenant-id' => $tenantId,
+            ]
+        ]);
+
+        $this->transport = $transport;
     }
 
-    /**
-     * @return Client
-     */
-    public function getOAuthClient()
-    {
-        return $this->oauth_client;
-    }
-
-    /**
-     * @param string|null $oauth_token
-     *
-     * @return string
-     */
-    public function getAuthorizeURL($oauth_token = null)
-    {
-        return $this->oauth_client->getAuthorizeURL($oauth_token);
-    }
 
     /**
      * @param mixed $key
@@ -103,11 +93,8 @@ abstract class Application
     /**
      * @param string $config
      * @param mixed $option
-     * @param mixed $value
-     *
-     * @throws Exception
-     *
      * @return mixed
+     * @throws Exception
      */
     public function getConfigOption($config, $option)
     {
@@ -127,7 +114,6 @@ abstract class Application
     {
         $this->config = array_replace_recursive(
             self::$_config_defaults,
-            static::$_type_config_defaults,
             $config
         );
 
@@ -151,6 +137,23 @@ abstract class Application
         $this->config[$config][$option] = $value;
 
         return $this->config;
+    }
+
+    /**
+     * @return ClientInterface
+     */
+    public function getTransport()
+    {
+        return $this->transport;
+    }
+
+    /**
+     * @param ClientInterface $client
+     * @return ClientInterface
+     */
+    public function setTransport(ClientInterface $client)
+    {
+        return $this->transport = $client;
     }
 
     /**
@@ -202,10 +205,12 @@ abstract class Application
      */
     public function loadByGUID($model, $guid)
     {
-        /**
-         * @var Remote\Model
-         */
+        /** @var Remote\Model $class */
         $class = $this->validateModelClass($model);
+
+        if(!$guid){
+            throw new Remote\Exception\NotFoundException;
+        }
 
         $uri = sprintf('%s/%s', $class::getResourceURI(), $guid);
         $api = $class::getAPIStem();
@@ -216,9 +221,8 @@ abstract class Application
 
         //Return the first (if any) element from the response.
         foreach ($request->getResponse()->getElements() as $element) {
-            /**
-             * @var Remote\Model
-             */
+
+            /** @var $object Remote\Model */
             $object = new $class($this);
             $object->fromStringArray($element);
 
@@ -239,10 +243,12 @@ abstract class Application
      */
     public function loadByGUIDs($model, $guids)
     {
-        /**
-         * @var Remote\Model
-         */
+        /** @var $class Remote\Model */
         $class = $this->validateModelClass($model);
+
+        if(empty($guids)){
+            return [];
+        }
 
         $uri = sprintf('%s', $class::getResourceURI());
         $api = $class::getAPIStem();
@@ -252,10 +258,10 @@ abstract class Application
         $request->setParameter('IDs', $guids);
         $request->send();
         $elements = new Collection();
+
         foreach ($request->getResponse()->getElements() as $element) {
-            /**
-             * @var Remote\Model
-             */
+
+            /** @var $object Remote\Model */
             $object = new $class($this);
             $object->fromStringArray($element);
             $elements->append($object);
@@ -266,8 +272,6 @@ abstract class Application
 
     /**
      * @param string $model
-     *
-     * @throws Remote\Exception
      *
      * @return Query
      */
@@ -295,6 +299,7 @@ abstract class Application
         if (!$object->isDirty()) {
             return;
         }
+
         $object->validate();
 
         if ($object->hasGUID()) {
@@ -344,9 +349,8 @@ abstract class Application
 
         //Just get one type to compare with, doesn't matter which.
         $current_object = $objects[0];
-        /**
-         * @var Remote\Model
-         */
+
+        /** @var $type Remote\Model */
         $type = get_class($current_object);
         $has_guid = $checkGuid ? $current_object->hasGUID() : true;
         $object_arrays = [];
@@ -441,7 +445,7 @@ abstract class Application
      *
      * @throws Exception
      *
-     * @return Remote\Response
+     * @return Remote\Model
      */
     public function delete(Remote\Model $object)
     {

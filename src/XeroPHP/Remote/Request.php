@@ -50,6 +50,14 @@ class Request
      */
     private $response;
 
+    /**
+     * Request constructor.
+     * @param Application $app
+     * @param URL $url
+     * @param string $method
+     * @throws Exception
+     * @throws \XeroPHP\Exception
+     */
     public function __construct(Application $app, URL $url, $method = self::METHOD_GET)
     {
         $this->app = $app;
@@ -78,21 +86,29 @@ class Request
         }
     }
 
+    /**
+     * @throws Exception
+     * @throws Exception\BadRequestException
+     * @throws Exception\ForbiddenException
+     * @throws Exception\InternalErrorException
+     * @throws Exception\NotAvailableException
+     * @throws Exception\NotFoundException
+     * @throws Exception\NotImplementedException
+     * @throws Exception\OrganisationOfflineException
+     * @throws Exception\RateLimitExceededException
+     * @throws Exception\ReportPermissionMissingException
+     * @throws Exception\UnauthorizedException
+     */
     public function send()
     {
-        //Sign the request - this just sets the Authorization header
-        $this->app->getOAuthClient()->sign($this);
+        $uri = Uri::withQueryValues(new Uri($this->getUrl()->getFullURL()), $this->getParameters());
 
-        // configure curl
-        $ch = curl_init();
-        curl_setopt_array($ch, $this->app->getConfig('curl'));
+        $request = new PsrRequest($this->getMethod(), $uri, $this->getHeaders(), $this->body);
 
-        curl_setopt($ch, CURLINFO_HEADER_OUT, true);
-        curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
-        curl_setopt($ch, CURLOPT_CUSTOMREQUEST, $this->getMethod());
-
-        if (isset($this->body)) {
-            curl_setopt($ch, CURLOPT_POSTFIELDS, $this->body);
+        try {
+            $guzzleResponse = $this->app->getTransport()->send($request);
+        }  catch (\GuzzleHttp\Exception\BadResponseException $e) {
+            $guzzleResponse = $e->getResponse();
         }
 
         //build header array.  Don't provide glue so it'll return the array itself.
@@ -141,7 +157,6 @@ class Request
 
         $this->response = new Response($this, $response, $info, $headers);
         $this->response->parse();
-
         return $this->response;
     }
 
@@ -164,8 +179,8 @@ class Request
      */
     public function getHeader($key)
     {
-        if (! isset($this->headers[$key])) {
-            return;
+        if (!isset($this->headers[$key])) {
+            return null;
         }
 
         return $this->headers[$key];
