@@ -108,13 +108,13 @@ class Invoice extends Remote\Model
     /**
      * Shown on sales invoices (Accounts Receivable) when this has been set.
      *
-     * @property \DateTimeInterface ExpectedPaymentDate
+     * @property string ExpectedPaymentDate
      */
 
     /**
      * Shown on bills (Accounts Payable) when this has been set.
      *
-     * @property \DateTimeInterface PlannedPaymentDate
+     * @property string PlannedPaymentDate
      */
 
     /**
@@ -308,8 +308,8 @@ class Invoice extends Remote\Model
             'CurrencyRate' => [false, self::PROPERTY_TYPE_FLOAT, null, false, false],
             'Status' => [false, self::PROPERTY_TYPE_ENUM, null, false, false],
             'SentToContact' => [false, self::PROPERTY_TYPE_BOOLEAN, null, false, false],
-            'ExpectedPaymentDate' => [false, self::PROPERTY_TYPE_DATE, '\\DateTimeInterface', false, false],
-            'PlannedPaymentDate' => [false, self::PROPERTY_TYPE_DATE, '\\DateTimeInterface', false, false],
+            'ExpectedPaymentDate' => [false, self::PROPERTY_TYPE_STRING, null, false, false],
+            'PlannedPaymentDate' => [false, self::PROPERTY_TYPE_STRING, null, false, false],
             'SubTotal' => [false, self::PROPERTY_TYPE_FLOAT, null, false, false],
             'TotalTax' => [false, self::PROPERTY_TYPE_FLOAT, null, false, false],
             'Total' => [false, self::PROPERTY_TYPE_FLOAT, null, false, false],
@@ -635,7 +635,7 @@ class Invoice extends Remote\Model
     }
 
     /**
-     * @return \DateTimeInterface
+     * @return string
      */
     public function getExpectedPaymentDate()
     {
@@ -643,7 +643,7 @@ class Invoice extends Remote\Model
     }
 
     /**
-     * @param \DateTimeInterface $value
+     * @param string $value
      *
      * @return Invoice
      */
@@ -656,7 +656,7 @@ class Invoice extends Remote\Model
     }
 
     /**
-     * @return \DateTimeInterface
+     * @return string
      */
     public function getPlannedPaymentDate()
     {
@@ -664,7 +664,7 @@ class Invoice extends Remote\Model
     }
 
     /**
-     * @param \DateTimeInterface $value
+     * @param string $value
      *
      * @return Invoice
      */

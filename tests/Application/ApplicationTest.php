@@ -2,10 +2,21 @@
 
 namespace XeroPHP\tests\Application;
 
-use XeroPHP\Application;
+use XeroPHP\Application\PrivateApplication;
 
 class ApplicationTest extends \PHPUnit_Framework_TestCase
 {
+    public function testPrependsConfigNamespaceWhenValidatingModelClass()
+    {
+        $app = $this->instance();
+        $class = 'Accounting\\Invoice';
+
+        $this->assertSame(
+            $app->validateModelClass($class),
+            $app->getConfig('xero')['model_namespace'].'\\'.$class
+        );
+    }
+
     public function testAllowsFQNWhenValidatingModelClass()
     {
         $class = \XeroPHP\Models\Accounting\Invoice::class;
@@ -31,7 +42,13 @@ class ApplicationTest extends \PHPUnit_Framework_TestCase
         $this->setExpectedException(\Exception::class);
 
         $this->instance()->validateModelClass('Unknown\\Namespaced\\Class');
+    }
 
+    public function testOauthClientInstantiatedWithAppInstantiation()
+    {
+        $app = $this->instance();
+
+        $this->assertNotNull($app->getOAuthClient());
     }
 
     public function testSettingMissingConfigOptionThrowsException()
@@ -43,7 +60,7 @@ class ApplicationTest extends \PHPUnit_Framework_TestCase
 
     public function testSetConfigOptionUpdatesConfiguration()
     {
-        $key = 'xero';
+        $key = 'oauth';
         $subkey = 'test_sub_key';
         $expected = 'test_value';
         $app = $this->instance();
@@ -82,7 +99,7 @@ class ApplicationTest extends \PHPUnit_Framework_TestCase
     {
         $this->setExpectedException(\Exception::class);
 
-        $this->instance()->getConfigOption('xero', 'non_existent_key');
+        $this->instance()->getConfigOption('oauth', 'non_existent_key');
     }
 
     public function testAccessingMissingConfigThrowsException()
@@ -94,9 +111,10 @@ class ApplicationTest extends \PHPUnit_Framework_TestCase
 
     protected function instance($config = [])
     {
-        $application = new Application('token', 'tenantId');
-        $application->setConfig($config);
-
-        return $application;
+        return new PrivateApplication(
+            array_merge_recursive([
+                'oauth' => ['consumer_key' => 'CONSUMER_KEY'],
+            ], $config)
+        );
     }
 }

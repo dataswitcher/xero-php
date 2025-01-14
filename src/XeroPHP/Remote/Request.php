@@ -2,8 +2,8 @@
 
 namespace XeroPHP\Remote;
 
-use XeroPHP\Application;
 use XeroPHP\Helpers;
+use XeroPHP\Application;
 
 class Request
 {
@@ -50,14 +50,6 @@ class Request
      */
     private $response;
 
-    /**
-     * Request constructor.
-     * @param Application $app
-     * @param URL $url
-     * @param string $method
-     * @throws Exception
-     * @throws \XeroPHP\Exception
-     */
     public function __construct(Application $app, URL $url, $method = self::METHOD_GET)
     {
         $this->app = $app;
@@ -86,29 +78,21 @@ class Request
         }
     }
 
-    /**
-     * @throws Exception
-     * @throws Exception\BadRequestException
-     * @throws Exception\ForbiddenException
-     * @throws Exception\InternalErrorException
-     * @throws Exception\NotAvailableException
-     * @throws Exception\NotFoundException
-     * @throws Exception\NotImplementedException
-     * @throws Exception\OrganisationOfflineException
-     * @throws Exception\RateLimitExceededException
-     * @throws Exception\ReportPermissionMissingException
-     * @throws Exception\UnauthorizedException
-     */
     public function send()
     {
-        $uri = Uri::withQueryValues(new Uri($this->getUrl()->getFullURL()), $this->getParameters());
+        //Sign the request - this just sets the Authorization header
+        $this->app->getOAuthClient()->sign($this);
 
-        $request = new PsrRequest($this->getMethod(), $uri, $this->getHeaders(), $this->body);
+        // configure curl
+        $ch = curl_init();
+        curl_setopt_array($ch, $this->app->getConfig('curl'));
 
-        try {
-            $guzzleResponse = $this->app->getTransport()->send($request);
-        }  catch (\GuzzleHttp\Exception\BadResponseException $e) {
-            $guzzleResponse = $e->getResponse();
+        curl_setopt($ch, CURLINFO_HEADER_OUT, true);
+        curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
+        curl_setopt($ch, CURLOPT_CUSTOMREQUEST, $this->getMethod());
+
+        if (isset($this->body)) {
+            curl_setopt($ch, CURLOPT_POSTFIELDS, $this->body);
         }
 
         //build header array.  Don't provide glue so it'll return the array itself.
@@ -137,9 +121,9 @@ class Request
                 return $len;
             }
 
-            list($name, $value) = explode(':', $header ?? '', 2);
+            list($name, $value) = explode(':', $header, 2);
             $name = strtolower(trim($name));
-            $value = trim($value ?? '');
+            $value = trim($value);
             if (! array_key_exists($name, $headers)) {
                 $headers[$name] = [];
             }
@@ -152,11 +136,12 @@ class Request
         $info = curl_getinfo($ch);
 
         if ($response === false) {
-            throw new Exception('Curl error: ' . curl_error($ch));
+            throw new Exception('Curl error: '.curl_error($ch));
         }
 
         $this->response = new Response($this, $response, $info, $headers);
         $this->response->parse();
+
         return $this->response;
     }
 
@@ -179,8 +164,8 @@ class Request
      */
     public function getHeader($key)
     {
-        if (!isset($this->headers[$key])) {
-            return null;
+        if (! isset($this->headers[$key])) {
+            return;
         }
 
         return $this->headers[$key];
@@ -199,6 +184,8 @@ class Request
         if (isset($this->response)) {
             return $this->response;
         }
+
+        
     }
 
     /**
