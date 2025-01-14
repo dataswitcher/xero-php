@@ -20,7 +20,27 @@ class Application
             'core_version' => '2.0',
             'payroll_version' => '1.0',
             'file_version' => '1.0',
-        ]
+            'model_namespace' => '\\XeroPHP\\Models',
+        ],
+        //OAuth config
+        'oauth' => [
+            'signature_method' => Client::SIGNATURE_RSA_SHA1,
+            'signature_location' => Client::SIGN_LOCATION_HEADER,
+            'authorize_url' => 'https://api.xero.com/oauth/Authorize',
+            'request_token_path' => 'oauth/RequestToken',
+            'access_token_path' => 'oauth/AccessToken',
+        ],
+        'curl' => [
+            CURLOPT_USERAGENT => 'XeroPHP',
+            CURLOPT_CONNECTTIMEOUT => 30,
+            CURLOPT_TIMEOUT => 60,
+            CURLOPT_SSL_VERIFYPEER => 2,
+            CURLOPT_SSL_VERIFYHOST => 2,
+            CURLOPT_FOLLOWLOCATION => false,
+            CURLOPT_PROXY => false,
+            CURLOPT_PROXYUSERPWD => false,
+            CURLOPT_ENCODING => '',
+        ],
     ];
 
     /**
@@ -169,7 +189,7 @@ class Application
      */
     protected function prependConfigNamespace($class)
     {
-        return '\\XeroPHP\\Models\\' . $class;
+        return $this->getConfig('xero')['model_namespace'] . '\\' . $class;
     }
 
     /**
@@ -208,9 +228,6 @@ class Application
 
             return $object;
         }
-
-        //This will never happen; if not found an exception will be thrown
-        return null;
     }
 
     /**
@@ -280,7 +297,7 @@ class Application
         $this->savePropertiesDirectly($object);
 
         if (!$object->isDirty()) {
-            return null;
+            return;
         }
 
         $object->validate();

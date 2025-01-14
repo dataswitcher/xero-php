@@ -113,7 +113,8 @@ class Query
                 $this->where[] = sprintf('%s==%s', $args[0], $args[1]);
             } elseif (preg_match('/^(\'|")?(true|false)("|\')?$/i', $args[1])) {
                 $this->where[] = sprintf('%s=%s', $args[0], $args[1]);
-            } elseif (preg_match('/^([a-z]+)(\\.\\1)?ID$/i', $args[0])
+            } elseif (
+                preg_match('/^([a-z]+)\\.\\1ID$/i', $args[0])
                 && preg_match(
                     '/^[0-9a-f]{8}-([0-9a-f]{4}-){3}[0-9a-f]{12}$/i',
                     $args[1]
@@ -219,7 +220,7 @@ class Query
          * @var ObjectInterface
          */
         $from_class = $this->from_class;
-        if (! $from_class::isPageable()) {
+        if (!$from_class::isPageable()) {
             throw new Exception(sprintf('%s does not support paging.', $from_class));
         }
         $this->page = (int) $page;
@@ -277,7 +278,7 @@ class Query
         // Concatenate where statements
         $where = $this->getWhere();
 
-        if (! empty($where)) {
+        if (!empty($where)) {
             $request->setParameter('where', $where);
         }
 
@@ -324,6 +325,7 @@ class Query
             $built_element->fromStringArray($element);
             $elements->append($built_element);
         }
+        $elements->headers = $request->getResponse()->getHeaders();
 
         return $elements;
     }

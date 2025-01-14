@@ -64,6 +64,8 @@ class Response
         $this->response_body = $response_body;
         $this->status = $status;
         $this->headers = $headers;
+      
+        list($this->content_type) = explode(';', $curl_info['content_type'] ?? '');
     }
 
     /**
@@ -96,8 +98,8 @@ class Response
                 throw new BadRequestException();
 
 
-            /** @noinspection PhpMissingBreakStatementInspection */
-            // no break
+                /** @noinspection PhpMissingBreakStatementInspection */
+                // no break
             case self::STATUS_UNAUTHORISED:
                 //This is where OAuth errors end up, this could maybe change to an OAuth exception
                 if (isset($this->oauth_response['oauth_problem_advice'])) {
@@ -193,6 +195,11 @@ class Response
     public function getElementWarnings()
     {
         return $this->element_warnings;
+    }
+
+    public function getHeaders()
+    {
+        return $this->headers;
     }
 
     public function getRootError()

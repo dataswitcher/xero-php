@@ -2,9 +2,8 @@
 
 namespace XeroPHP\Remote;
 
-use GuzzleHttp\Psr7\Request as PsrRequest;
-use GuzzleHttp\Psr7\Uri;
 use XeroPHP\Application;
+use XeroPHP\Helpers;
 
 class Request
 {
@@ -111,11 +110,52 @@ class Request
         }  catch (\GuzzleHttp\Exception\BadResponseException $e) {
             $guzzleResponse = $e->getResponse();
         }
-        $this->response = new Response($this,
-            $guzzleResponse->getBody()->getContents(),
-            $guzzleResponse->getStatusCode(),
-            $guzzleResponse->getHeaders()
-        );
+
+        //build header array.  Don't provide glue so it'll return the array itself.
+        //Maybe could be a but cleaner but nice to reuse code.
+        $header_array = Helpers::flattenAssocArray($this->getHeaders(), '%s: %s');
+        curl_setopt($ch, CURLOPT_HTTPHEADER, $header_array);
+
+        $full_uri = $this->getUrl()->getFullURL();
+        //build parameter array - the only time there's a post body is with the XML,
+        //only escape at this point
+        $query_string = Helpers::flattenAssocArray($this->getParameters(), '%s=%s', '&', true);
+
+        if (strlen($query_string) > 0) {
+            $full_uri .= "?{$query_string}";
+        }
+        curl_setopt($ch, CURLOPT_URL, $full_uri);
+
+        if ($this->method === self::METHOD_POST || $this->method === self::METHOD_PUT) {
+            curl_setopt($ch, CURLOPT_POST, true);
+        }
+
+        $headers = [];
+        curl_setopt($ch, CURLOPT_HEADERFUNCTION, function ($curl, $header) use (&$headers) {
+            $len = strlen($header);
+            if (strpos($header, ':') === false) {
+                return $len;
+            }
+
+            list($name, $value) = explode(':', $header ?? '', 2);
+            $name = strtolower(trim($name));
+            $value = trim($value ?? '');
+            if (! array_key_exists($name, $headers)) {
+                $headers[$name] = [];
+            }
+            $headers[$name][] = $value;
+
+            return $len;
+        });
+
+        $response = curl_exec($ch);
+        $info = curl_getinfo($ch);
+
+        if ($response === false) {
+            throw new Exception('Curl error: ' . curl_error($ch));
+        }
+
+        $this->response = new Response($this, $response, $info, $headers);
         $this->response->parse();
         return $this->response;
     }
@@ -159,8 +199,6 @@ class Request
         if (isset($this->response)) {
             return $this->response;
         }
-
-        return null;
     }
 
     /**
