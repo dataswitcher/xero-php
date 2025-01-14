@@ -67,13 +67,13 @@ class Item extends Remote\Model
     /**
      * See Purchases & Sales.
      *
-     * @property Purchase PurchaseDetails
+     * @property Purchase[] PurchaseDetails
      */
 
     /**
      * See Purchases & Sales.
      *
-     * @property Sale SalesDetails
+     * @property Sale[] SalesDetails
      */
 
     /**
@@ -358,7 +358,7 @@ class Item extends Remote\Model
     }
 
     /**
-     * @return Purchase
+     * @return Purchase[]|Remote\Collection
      */
     public function getPurchaseDetails()
     {
@@ -390,7 +390,7 @@ class Item extends Remote\Model
     }
 
     /**
-     * @return Sale
+     * @return Remote\Collection|Sale[]
      */
     public function getSalesDetails()
     {

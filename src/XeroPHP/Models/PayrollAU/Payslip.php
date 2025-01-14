@@ -95,19 +95,19 @@ class Payslip extends Remote\Model
     /**
      * Last edited.
      *
-     * @property \DateTimeInterface LastEdited
+     * @property string LastEdited
      */
 
     /**
      * The Total Wages for the PayRun.
      *
-     * @property float Wages
+     * @property float[] Wages
      */
 
     /**
      * The Total Deductions for the PayRun.
      *
-     * @property float Deductions
+     * @property float[] Deductions
      */
 
     /**
@@ -131,7 +131,7 @@ class Payslip extends Remote\Model
     /**
      * The Total Reimbursement for the PayRun.
      *
-     * @property float Reimbursements
+     * @property float[] Reimbursements
      */
 
     /**
@@ -217,13 +217,13 @@ class Payslip extends Remote\Model
             'FirstName' => [false, self::PROPERTY_TYPE_STRING, null, false, false],
             'LastName' => [false, self::PROPERTY_TYPE_STRING, null, false, false],
             'EmployeeGroup' => [false, self::PROPERTY_TYPE_STRING, null, false, false],
-            'LastEdited' => [false, self::PROPERTY_TYPE_DATE, '\\DateTimeInterface', false, false],
-            'Wages' => [false, self::PROPERTY_TYPE_FLOAT, null, false, false],
-            'Deductions' => [false, self::PROPERTY_TYPE_FLOAT, null, false, false],
+            'LastEdited' => [false, self::PROPERTY_TYPE_STRING, null, false, false],
+            'Wages' => [false, self::PROPERTY_TYPE_FLOAT, null, true, false],
+            'Deductions' => [false, self::PROPERTY_TYPE_FLOAT, null, true, false],
             'NetPay' => [false, self::PROPERTY_TYPE_FLOAT, null, false, false],
             'Tax' => [false, self::PROPERTY_TYPE_FLOAT, null, false, false],
             'Super' => [false, self::PROPERTY_TYPE_FLOAT, null, false, false],
-            'Reimbursements' => [false, self::PROPERTY_TYPE_FLOAT, null, false, false],
+            'Reimbursements' => [false, self::PROPERTY_TYPE_FLOAT, null, true, false],
             'LeaveEarningsLines' => [false, self::PROPERTY_TYPE_OBJECT, 'PayrollAU\\Payslip\\LeaveEarningsLine', true, false],
         ];
     }
@@ -489,7 +489,7 @@ class Payslip extends Remote\Model
     }
 
     /**
-     * @return \DateTimeInterface
+     * @return string
      */
     public function getLastEdited()
     {
@@ -497,7 +497,7 @@ class Payslip extends Remote\Model
     }
 
     /**
-     * @return float
+     * @return float[]|Remote\Collection
      */
     public function getWages()
     {
@@ -505,7 +505,7 @@ class Payslip extends Remote\Model
     }
 
     /**
-     * @return float
+     * @return float[]|Remote\Collection
      */
     public function getDeductions()
     {
@@ -537,7 +537,7 @@ class Payslip extends Remote\Model
     }
 
     /**
-     * @return float
+     * @return float[]|Remote\Collection
      */
     public function getReimbursements()
     {

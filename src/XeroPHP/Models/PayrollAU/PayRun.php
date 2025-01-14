@@ -35,9 +35,6 @@ class PayRun extends Remote\Model
      *
      * @property string PayRunStatus
      */
-    const STATUS_POSTED = 'POSTED';
-    
-    const STATUS_DRAFT = 'DRAFT';
 
     /**
      * Payment Date for the PayRun (YYYY-MM-DD).
@@ -60,13 +57,13 @@ class PayRun extends Remote\Model
     /**
      * Total Wages for the PayRun.
      *
-     * @property float Wages
+     * @property string Wages
      */
 
     /**
      * Total Deduction for the PayRun.
      *
-     * @property float Deductions
+     * @property string Deductions
      */
 
     /**
@@ -78,19 +75,19 @@ class PayRun extends Remote\Model
     /**
      * Total Super for the PayRun.
      *
-     * @property float Super
+     * @property string Super
      */
 
     /**
      * Total Reimbursement for the PayRun.
      *
-     * @property float Reimbursement
+     * @property string Reimbursement
      */
 
     /**
      * Total NetPay for the PayRun.
      *
-     * @property float NetPay
+     * @property string NetPay
      */
 
     /**
@@ -165,12 +162,12 @@ class PayRun extends Remote\Model
             'PaymentDate' => [false, self::PROPERTY_TYPE_DATE, '\\DateTimeInterface', false, false],
             'PayslipMessage' => [false, self::PROPERTY_TYPE_STRING, null, false, false],
             'Payslips' => [false, self::PROPERTY_TYPE_OBJECT, 'PayrollAU\\Payslip', true, false],
-            'Wages' => [false, self::PROPERTY_TYPE_FLOAT, null, false, false],
-            'Deductions' => [false, self::PROPERTY_TYPE_FLOAT, null, false, false],
+            'Wages' => [false, self::PROPERTY_TYPE_STRING, null, false, false],
+            'Deductions' => [false, self::PROPERTY_TYPE_STRING, null, false, false],
             'Tax' => [false, self::PROPERTY_TYPE_FLOAT, null, false, false],
-            'Super' => [false, self::PROPERTY_TYPE_FLOAT, null, false, false],
-            'Reimbursement' => [false, self::PROPERTY_TYPE_FLOAT, null, false, false],
-            'NetPay' => [false, self::PROPERTY_TYPE_FLOAT, null, false, false],
+            'Super' => [false, self::PROPERTY_TYPE_STRING, null, false, false],
+            'Reimbursement' => [false, self::PROPERTY_TYPE_STRING, null, false, false],
+            'NetPay' => [false, self::PROPERTY_TYPE_STRING, null, false, false],
         ];
     }
 
@@ -312,19 +309,6 @@ class PayRun extends Remote\Model
     {
         return $this->_data['PayslipMessage'];
     }
-    
-     /**
-     * @param string $value
-     *
-     * @return PayRun
-     */
-    public function setPayslipMessage($value)
-    {
-        $this->propertyUpdated('PayslipMessage', $value);
-        $this->_data['PayslipMessage'] = $value;
-
-        return $this;
-    }
 
     /**
      * @return Payslip[]|Remote\Collection
@@ -335,7 +319,7 @@ class PayRun extends Remote\Model
     }
 
     /**
-     * @return float
+     * @return string
      */
     public function getWages()
     {
@@ -343,7 +327,7 @@ class PayRun extends Remote\Model
     }
 
     /**
-     * @return float
+     * @return string
      */
     public function getDeductions()
     {
@@ -359,7 +343,7 @@ class PayRun extends Remote\Model
     }
 
     /**
-     * @return float
+     * @return string
      */
     public function getSuper()
     {
@@ -367,7 +351,7 @@ class PayRun extends Remote\Model
     }
 
     /**
-     * @return float
+     * @return string
      */
     public function getReimbursement()
     {
@@ -375,7 +359,7 @@ class PayRun extends Remote\Model
     }
 
     /**
-     * @return float
+     * @return string
      */
     public function getNetPay()
     {
