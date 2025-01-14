@@ -2,18 +2,18 @@
 
 namespace XeroPHP\Remote;
 
-use XeroPHP\Helpers;
 use SimpleXMLElement;
-use XeroPHP\Remote\Exception\NotFoundException;
+use XeroPHP\Helpers;
 use XeroPHP\Remote\Exception\BadRequestException;
 use XeroPHP\Remote\Exception\ForbiddenException;
-use XeroPHP\Remote\Exception\ReportPermissionMissingException;
-use XeroPHP\Remote\Exception\NotAvailableException;
-use XeroPHP\Remote\Exception\UnauthorizedException;
 use XeroPHP\Remote\Exception\InternalErrorException;
+use XeroPHP\Remote\Exception\NotAvailableException;
+use XeroPHP\Remote\Exception\NotFoundException;
 use XeroPHP\Remote\Exception\NotImplementedException;
-use XeroPHP\Remote\Exception\RateLimitExceededException;
 use XeroPHP\Remote\Exception\OrganisationOfflineException;
+use XeroPHP\Remote\Exception\RateLimitExceededException;
+use XeroPHP\Remote\Exception\ReportPermissionMissingException;
+use XeroPHP\Remote\Exception\UnauthorizedException;
 
 class Response
 {
@@ -65,7 +65,7 @@ class Response
         $this->status = $curl_info['http_code'];
         $this->headers = $headers;
 
-        list($this->content_type) = explode(';', $curl_info['content_type']);
+        list($this->content_type) = explode(';', $curl_info['content_type'] ?? '');
     }
 
     /**
