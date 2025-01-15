@@ -121,9 +121,9 @@ class Request
                 return $len;
             }
 
-            list($name, $value) = explode(':', $header, 2);
+            list($name, $value) = explode(':', $header ?? '', 2);
             $name = strtolower(trim($name));
-            $value = trim($value);
+            $value = trim($value ?? '');
             if (! array_key_exists($name, $headers)) {
                 $headers[$name] = [];
             }
@@ -136,7 +136,7 @@ class Request
         $info = curl_getinfo($ch);
 
         if ($response === false) {
-            throw new Exception('Curl error: '.curl_error($ch));
+            throw new Exception('Curl error: ' . curl_error($ch));
         }
 
         $this->response = new Response($this, $response, $info, $headers);
@@ -184,8 +184,6 @@ class Request
         if (isset($this->response)) {
             return $this->response;
         }
-
-        
     }
 
     /**

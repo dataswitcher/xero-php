@@ -65,7 +65,7 @@ class Response
         $this->status = $curl_info['http_code'];
         $this->headers = $headers;
 
-        list($this->content_type) = explode(';', $curl_info['content_type']);
+        list($this->content_type) = explode(';', $curl_info['content_type'] ?? '');
     }
 
     /**
