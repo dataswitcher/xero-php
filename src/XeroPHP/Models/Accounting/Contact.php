@@ -90,6 +90,11 @@ class Contact extends Remote\Model
      */
 
     /**
+     * Company registration number. Max 50 char.
+     * @property string CompanyNumber
+     */
+
+    /**
      * Default tax type used for contact on AR invoices.
      *
      * @property string AccountsReceivableTaxType
@@ -182,7 +187,7 @@ class Contact extends Remote\Model
     /**
      * The default payment terms for the contact – see Payment Terms.
      *
-     * @property PaymentTerm[] PaymentTerms
+     * @property PaymentTerm PaymentTerms
      */
 
     /**
@@ -270,7 +275,7 @@ class Contact extends Remote\Model
     /**
      * Get the stem of the API (core.xro) etc.
      *
-     * @return string|null
+     * @return string
      */
     public static function getAPIStem()
     {
@@ -314,6 +319,7 @@ class Contact extends Remote\Model
             'ContactPersons' => [false, self::PROPERTY_TYPE_OBJECT, 'Accounting\\Contact\\ContactPerson', true, false],
             'BankAccountDetails' => [false, self::PROPERTY_TYPE_STRING, null, false, false],
             'TaxNumber' => [false, self::PROPERTY_TYPE_STRING, null, false, false],
+            'CompanyNumber' => [false, self::PROPERTY_TYPE_STRING, null, false, false],
             'AccountsReceivableTaxType' => [false, self::PROPERTY_TYPE_STRING, null, false, false],
             'AccountsPayableTaxType' => [false, self::PROPERTY_TYPE_STRING, null, false, false],
             'Addresses' => [false, self::PROPERTY_TYPE_OBJECT, 'Accounting\\Address', true, false],
@@ -322,6 +328,7 @@ class Contact extends Remote\Model
             'IsCustomer' => [false, self::PROPERTY_TYPE_BOOLEAN, null, false, false],
             'DefaultCurrency' => [false, self::PROPERTY_TYPE_STRING, null, false, false],
             'XeroNetworkKey' => [false, self::PROPERTY_TYPE_STRING, null, false, false],
+            'MergedToContactID' => [false, self::PROPERTY_TYPE_STRING, null, false, false],
             'SalesDefaultAccountCode' => [false, self::PROPERTY_TYPE_STRING, null, false, false],
             'PurchasesDefaultAccountCode' => [false, self::PROPERTY_TYPE_STRING, null, false, false],
             'SalesTrackingCategories' => [false, self::PROPERTY_TYPE_OBJECT, 'Accounting\\TrackingCategory', true, false],
@@ -565,16 +572,28 @@ class Contact extends Remote\Model
     {
         return $this->_data['BankAccountDetails'];
     }
-
+    
     /**
      * @param string $value
      *
      * @return Contact
      */
-    public function setBankAccountDetail($value)
+    public function setBankAccountDetails($value)
     {
         $this->propertyUpdated('BankAccountDetails', $value);
         $this->_data['BankAccountDetails'] = $value;
+
+        return $this;
+    }
+
+    /**
+     * @param string $value
+     * @deprecated Use setBankAccountDetails
+     * @return Contact
+     */
+    public function setBankAccountDetail($value)
+    {
+        $this->setBankAccountDetails($value);
 
         return $this;
     }
@@ -596,6 +615,27 @@ class Contact extends Remote\Model
     {
         $this->propertyUpdated('TaxNumber', $value);
         $this->_data['TaxNumber'] = $value;
+
+        return $this;
+    }
+
+    /**
+     * @return string
+     */
+    public function getCompanyNumber()
+    {
+        return $this->_data['CompanyNumber'];
+    }
+
+    /**
+     * @param string $value
+     *
+     * @return Contact
+     */
+    public function setCompanyNumber($value)
+    {
+        $this->propertyUpdated('CompanyNumber', $value);
+        $this->_data['CompanyNumber'] = $value;
 
         return $this;
     }
@@ -769,6 +809,27 @@ class Contact extends Remote\Model
     /**
      * @return string
      */
+    public function getMergedToContactID()
+    {
+        return $this->_data['MergedToContactID'];
+    }
+
+    /**
+     * @param string $value
+     *
+     * @return Contact
+     */
+    public function setMergedToContactID($value)
+    {
+        $this->propertyUpdated('MergedToContactID', $value);
+        $this->_data['MergedToContactID'] = $value;
+
+        return $this;
+    }
+
+    /**
+     * @return string
+     */
     public function getSalesDefaultAccountCode()
     {
         return $this->_data['SalesDefaultAccountCode'];
@@ -899,7 +960,7 @@ class Contact extends Remote\Model
     }
 
     /**
-     * @return PaymentTerm[]|Remote\Collection
+     * @return PaymentTerm|Remote\Collection
      */
     public function getPaymentTerms()
     {
@@ -917,7 +978,23 @@ class Contact extends Remote\Model
         if (! isset($this->_data['PaymentTerms'])) {
             $this->_data['PaymentTerms'] = new Remote\Collection();
         }
-        $this->_data['PaymentTerms'][] = $value;
+        $this->_data['PaymentTerms'] = $value;
+
+        return $this;
+    }
+
+    /**
+     * @param PaymentTerm $value
+     *
+     * @return Contact
+     */
+    public function setPaymentTerm(PaymentTerm $value)
+    {
+        $this->propertyUpdated('PaymentTerms', $value);
+        if (! isset($this->_data['PaymentTerms'])) {
+            $this->_data['PaymentTerms'] = new Remote\Collection();
+        }
+        $this->_data['PaymentTerms'] = $value;
 
         return $this;
     }

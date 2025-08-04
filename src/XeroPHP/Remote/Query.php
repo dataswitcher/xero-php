@@ -24,6 +24,8 @@ class Query
 
     private $page;
 
+    private $pageSize;
+
     private $fromDate;
 
     private $toDate;
@@ -34,7 +36,12 @@ class Query
 
     private $includeArchived;
 
+    private $createdByMyApp;
+
     private $params;
+
+    /** @var Response|null $response  */
+    private $response;
 
     public function __construct(Application $app)
     {
@@ -43,9 +50,12 @@ class Query
         $this->order = null;
         $this->modifiedAfter = null;
         $this->page = null;
+        $this->pageSize = null;
         $this->offset = null;
         $this->includeArchived = false;
+        $this->createdByMyApp = false;
         $this->params = [];
+        $this->response = null;
     }
 
     /**
@@ -113,14 +123,15 @@ class Query
                 $this->where[] = sprintf('%s==%s', $args[0], $args[1]);
             } elseif (preg_match('/^(\'|")?(true|false)("|\')?$/i', $args[1])) {
                 $this->where[] = sprintf('%s=%s', $args[0], $args[1]);
-            } elseif (
-                preg_match('/^([a-z]+)\\.\\1ID$/i', $args[0])
+            } elseif (preg_match('/^([a-z]+)(\\.\\1)?ID$/i', $args[0])
                 && preg_match(
                     '/^[0-9a-f]{8}-([0-9a-f]{4}-){3}[0-9a-f]{12}$/i',
                     $args[1]
                 )
             ) {
                 $this->where[] = sprintf('%s=Guid("%s")', $args[0], $args[1]);
+            } elseif (preg_match('/^DateTime\(.+\)$/', $args[1])) {
+                $this->where[] = sprintf('%s==%s', $args[0], $args[1]);
             } else {
                 $this->where[] = sprintf('%s=="%s"', $args[0], $args[1]);
             }
@@ -220,10 +231,32 @@ class Query
          * @var ObjectInterface
          */
         $from_class = $this->from_class;
-        if (!$from_class::isPageable()) {
+        if (! $from_class::isPageable()) {
             throw new Exception(sprintf('%s does not support paging.', $from_class));
         }
         $this->page = (int) $page;
+
+        return $this;
+    }
+
+
+    /**
+     * @param int $pageSize
+     *
+     * @throws Exception
+     *
+     * @return $this
+     */
+    public function pageSize($pageSize = 100)
+    {
+        /**
+         * @var ObjectInterface
+         */
+        $from_class = $this->from_class;
+        if (! $from_class::isPageable()) {
+            throw new Exception(sprintf('%s does not support paging.', $from_class));
+        }
+        $this->pageSize = (int) $pageSize;
 
         return $this;
     }
@@ -243,6 +276,13 @@ class Query
     public function includeArchived($includeArchived = true)
     {
         $this->includeArchived = (bool) $includeArchived;
+
+        return $this;
+    }
+
+    public function createdByMyApp($createdByMyApp = true)
+    {
+        $this->createdByMyApp = (bool) $createdByMyApp;
 
         return $this;
     }
@@ -278,7 +318,7 @@ class Query
         // Concatenate where statements
         $where = $this->getWhere();
 
-        if (!empty($where)) {
+        if (! empty($where)) {
             $request->setParameter('where', $where);
         }
 
@@ -306,6 +346,10 @@ class Query
             $request->setParameter('page', $this->page);
         }
 
+        if ($this->pageSize !== null) {
+            $request->setParameter('pageSize', $this->pageSize);
+        }
+
         if ($this->offset !== null) {
             $request->setParameter('offset', $this->offset);
         }
@@ -314,10 +358,15 @@ class Query
             $request->setParameter('includeArchived', 'true');
         }
 
+        if ($this->createdByMyApp !== false) {
+            $request->setParameter('createdByMyApp', 'true');
+        }
+
         $request->send();
 
         $elements = new Collection();
-        foreach ($request->getResponse()->getElements() as $element) {
+        $this->response = $request->getResponse();
+        foreach ($this->response->getElements() as $element) {
             /**
              * @var Model
              */
@@ -325,7 +374,6 @@ class Query
             $built_element->fromStringArray($element);
             $elements->append($built_element);
         }
-        $elements->headers = $request->getResponse()->getHeaders();
 
         return $elements;
     }
@@ -346,5 +394,13 @@ class Query
     public function getFrom()
     {
         return $this->from_class;
+    }
+
+    /**
+     * @return Response|null
+     */
+    public function getResponse()
+    {
+        return $this->response;
     }
 }

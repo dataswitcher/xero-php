@@ -3,9 +3,11 @@
 namespace XeroPHP\Models\Accounting;
 
 use XeroPHP\Remote;
+use XeroPHP\Traits\HistoryTrait;
 
 class BatchPayment extends Remote\Model
 {
+    use HistoryTrait;
 
     /**
      * Date the payment is being made (YYYY-MM-DD) e.g. 2009-09-06
@@ -43,13 +45,13 @@ class BatchPayment extends Remote\Model
      * (UK Only) Only shows on the statement line in Xero. Max length =18
      *
      * @property string Narrative
-     */
+     */ 
 
     /**
      * See Types.
      *
      * @property string PaymentType
-     */
+     */        
 
     public static function getResourceURI()
     {
@@ -82,7 +84,7 @@ class BatchPayment extends Remote\Model
     /**
      * Get the stem of the API (core.xro) etc
      *
-     * @return string|null
+     * @return string
      */
     public static function getAPIStem()
     {
@@ -147,7 +149,7 @@ class BatchPayment extends Remote\Model
 
     /**
      * @param Account $value
-     * @return Payment
+     * @return BatchPayment
      */
     public function setAccount(Account $value)
     {
@@ -250,7 +252,7 @@ class BatchPayment extends Remote\Model
         $this->propertyUpdated('Details', $value);
         $this->_data['Details'] = $value;
         return $this;
-    }
+    }    
 
     /**
      * @return \DateTimeInterface
@@ -311,7 +313,7 @@ class BatchPayment extends Remote\Model
         $this->propertyUpdated('BatchPaymentID', $value);
         $this->_data['BatchPaymentID'] = $value;
         return $this;
-    }
+    }    
 
     /**
      * @return Payment[]|Remote\Collection

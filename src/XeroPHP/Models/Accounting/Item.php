@@ -67,13 +67,13 @@ class Item extends Remote\Model
     /**
      * See Purchases & Sales.
      *
-     * @property Purchase[] PurchaseDetails
+     * @property Purchase PurchaseDetails
      */
 
     /**
      * See Purchases & Sales.
      *
-     * @property Sale[] SalesDetails
+     * @property Sale SalesDetails
      */
 
     /**
@@ -134,7 +134,7 @@ class Item extends Remote\Model
     /**
      * Get the stem of the API (core.xro) etc.
      *
-     * @return string|null
+     * @return string
      */
     public static function getAPIStem()
     {
@@ -358,7 +358,7 @@ class Item extends Remote\Model
     }
 
     /**
-     * @return Purchase[]|Remote\Collection
+     * @return Purchase
      */
     public function getPurchaseDetails()
     {
@@ -390,7 +390,7 @@ class Item extends Remote\Model
     }
 
     /**
-     * @return Remote\Collection|Sale[]
+     * @return Sale
      */
     public function getSalesDetails()
     {

@@ -42,6 +42,12 @@ class BankTransfer extends Remote\Model
      */
 
     /**
+     * additional reference number (max length = 255).
+     *
+     * @property string Reference
+     */
+
+    /**
      * The currency rate.
      *
      * @property float CurrencyRate
@@ -57,6 +63,18 @@ class BankTransfer extends Remote\Model
      * The Bank Transaction ID for the destination account.
      *
      * @property string ToBankTransactionID
+     */
+
+    /**
+     * Boolean to show if the from transaction is reconciled.
+     *
+     * @property bool FromIsReconciled
+     */
+
+    /**
+     * Boolean to show if the to transaction is reconciled.
+     *
+     * @property bool ToIsReconciled
      */
 
     /**
@@ -104,7 +122,7 @@ class BankTransfer extends Remote\Model
     /**
      * Get the stem of the API (core.xro) etc.
      *
-     * @return string|null
+     * @return string
      */
     public static function getAPIStem()
     {
@@ -140,9 +158,12 @@ class BankTransfer extends Remote\Model
             'Amount' => [true, self::PROPERTY_TYPE_STRING, null, false, false],
             'Date' => [false, self::PROPERTY_TYPE_DATE, '\\DateTimeInterface', false, false],
             'BankTransferID' => [false, self::PROPERTY_TYPE_STRING, null, false, false],
+            'Reference' => [false, self::PROPERTY_TYPE_STRING, null, false, false],
             'CurrencyRate' => [false, self::PROPERTY_TYPE_FLOAT, null, false, false],
             'FromBankTransactionID' => [false, self::PROPERTY_TYPE_STRING, null, false, false],
             'ToBankTransactionID' => [false, self::PROPERTY_TYPE_STRING, null, false, false],
+            'FromIsReconciled' => [false, self::PROPERTY_TYPE_BOOLEAN, null, false, false],
+            'ToIsReconciled' => [false, self::PROPERTY_TYPE_BOOLEAN, null, false, false],
             'HasAttachments' => [false, self::PROPERTY_TYPE_BOOLEAN, null, false, false],
             'CreatedDateUTC' => [false, self::PROPERTY_TYPE_TIMESTAMP, '\\DateTimeInterface', false, false],
         ];
@@ -259,6 +280,27 @@ class BankTransfer extends Remote\Model
     }
 
     /**
+     * @return string
+     */
+    public function getReference()
+    {
+        return $this->_data['Reference'];
+    }
+
+    /**
+     * @param string $value
+     *
+     * @return Invoice
+     */
+    public function setReference($value)
+    {
+        $this->propertyUpdated('Reference', $value);
+        $this->_data['Reference'] = $value;
+
+        return $this;
+    }
+
+    /**
      * @return float
      */
     public function getCurrencyRate()
@@ -280,6 +322,48 @@ class BankTransfer extends Remote\Model
     public function getToBankTransactionID()
     {
         return $this->_data['ToBankTransactionID'];
+    }
+
+    /**
+     * @return bool
+     */
+    public function getFromIsReconciled()
+    {
+        return $this->_data['FromIsReconciled'];
+    }
+
+    /**
+     * @param bool $value
+     *
+     * @return BankTransaction
+     */
+    public function setFromIsReconciled($value)
+    {
+        $this->propertyUpdated('FromIsReconciled', $value);
+        $this->_data['FromIsReconciled'] = $value;
+
+        return $this;
+    }
+
+    /**
+     * @return bool
+     */
+    public function getToIsReconciled()
+    {
+        return $this->_data['ToIsReconciled'];
+    }
+
+    /**
+     * @param bool $value
+     *
+     * @return BankTransaction
+     */
+    public function setToIsReconciled($value)
+    {
+        $this->propertyUpdated('ToIsReconciled', $value);
+        $this->_data['ToIsReconciled'] = $value;
+
+        return $this;
     }
 
     /**

@@ -4,6 +4,7 @@ namespace XeroPHP\Remote;
 
 use XeroPHP\Helpers;
 use XeroPHP\Application;
+use XeroPHP\Remote\Exception\RequiredFieldException;
 
 /**
  * Class Model.
@@ -66,7 +67,7 @@ abstract class Model implements ObjectInterface, \JsonSerializable, \ArrayAccess
      * Holds a ref to the application that was used to load the object,
      * enables shorthand $object->save();.
      *
-     * @var Application
+     * @var Application|null
      */
     protected $_application;
 
@@ -76,6 +77,11 @@ abstract class Model implements ObjectInterface, \JsonSerializable, \ArrayAccess
         $this->_dirty = [];
         $this->_data = [];
         $this->_associated_objects = [];
+    }
+
+    public static function make(Application $application = null)
+    {
+        return new static($application);
     }
 
     /**
@@ -193,6 +199,7 @@ abstract class Model implements ObjectInterface, \JsonSerializable, \ArrayAccess
         foreach (static::getProperties() as $property => $meta) {
             $type = $meta[self::KEY_TYPE];
             $php_type = $meta[self::KEY_PHP_TYPE];
+            $isArray = $meta[self::KEY_IS_ARRAY];
 
             //If set and NOT replace data, continue
             if (! $replace_data && isset($this->_data[$property])) {
@@ -205,10 +212,16 @@ abstract class Model implements ObjectInterface, \JsonSerializable, \ArrayAccess
                 continue;
             }
 
+            if ($isArray && ! is_array($input_array[$property])) {
+                $this->_data[$property] = null;
+
+                continue;
+            }
+
             //Fix for an earlier assumption that the API didn't return more than
             //two levels of nested objects.
             //Handles Invoice > Contact > Address etc. in one build.
-            if (is_array($input_array[$property]) && Helpers::isAssoc($input_array[$property]) === false) {
+            if ($isArray && Helpers::isAssoc($input_array[$property]) === false) {
                 $collection = new Collection();
                 $collection->addAssociatedObject($property, $this);
                 foreach ($input_array[$property] as $assoc_element) {
@@ -247,7 +260,7 @@ abstract class Model implements ObjectInterface, \JsonSerializable, \ArrayAccess
             }
 
             //if we only want the dirty props, stop here
-            if ($dirty_only && ! isset($this->_dirty[$property])) {
+            if ($dirty_only && ! isset($this->_dirty[$property]) && $property !== static::getGUIDProperty()) {
                 continue;
             }
 
@@ -336,7 +349,7 @@ abstract class Model implements ObjectInterface, \JsonSerializable, \ArrayAccess
             case self::PROPERTY_TYPE_BOOLEAN:
                 return in_array(strtolower($value), ['true', '1', 'yes'], true);
 
-                /** @noinspection PhpMissingBreakStatementInspection */
+            /** @noinspection PhpMissingBreakStatementInspection */
             case self::PROPERTY_TYPE_TIMESTAMP:
                 $timezone = new \DateTimeZone('UTC');
 
@@ -383,10 +396,13 @@ abstract class Model implements ObjectInterface, \JsonSerializable, \ArrayAccess
             //If it's got a GUID, it's already going to be valid almost all cases
             if (! $this->hasGUID() && $mandatory) {
                 if (! isset($this->_data[$property]) || empty($this->_data[$property])) {
-                    throw new Exception(
+                    $class = get_class($this);
+                    throw new RequiredFieldException(
+                        $class,
+                        $property,
                         sprintf(
                             '%s::$%s is mandatory and is either missing or empty.',
-                            get_class($this),
+                            $class,
                             $property
                         )
                     );
@@ -435,7 +451,7 @@ abstract class Model implements ObjectInterface, \JsonSerializable, \ArrayAccess
      *
      * @throws Exception
      *
-     * @return Response|null
+     * @return Response
      */
     public function delete()
     {
@@ -508,7 +524,9 @@ abstract class Model implements ObjectInterface, \JsonSerializable, \ArrayAccess
 
     protected function propertyUpdated($property, $value)
     {
-        if (! isset($this->_data[$property]) || $this->_data[$property] !== $value) {
+        $currentValue = isset($this->_data[$property]) ? $this->_data[$property] : null;
+
+        if ($currentValue !== $value) {
             //If this object can update itself, set its own dirty flag, otherwise, set its parent's.
             if (count(array_intersect($this::getSupportedMethods(), [Request::METHOD_PUT, Request::METHOD_POST])) > 0) {
                 //Object can update itself
@@ -537,9 +555,10 @@ abstract class Model implements ObjectInterface, \JsonSerializable, \ArrayAccess
     /**
      * JSON Encode overload to pull out hidden properties.
      *
-     * @return string
+     * @return array
      */
-    public function jsonSerialize(): array
+    #[\ReturnTypeWillChange]
+    public function jsonSerialize()
     {
         return $this->toStringArray();
     }
@@ -549,7 +568,8 @@ abstract class Model implements ObjectInterface, \JsonSerializable, \ArrayAccess
      *
      * @return bool
      */
-    public function offsetExists($offset): bool
+    #[\ReturnTypeWillChange]
+    public function offsetExists($offset)
     {
         return $this->__isset($offset);
     }
@@ -559,7 +579,8 @@ abstract class Model implements ObjectInterface, \JsonSerializable, \ArrayAccess
      *
      * @return mixed
      */
-    public function offsetGet($offset): mixed
+    #[\ReturnTypeWillChange]
+    public function offsetGet($offset)
     {
         return $this->__get($offset);
     }
@@ -570,15 +591,17 @@ abstract class Model implements ObjectInterface, \JsonSerializable, \ArrayAccess
      *
      * @return mixed
      */
-    public function offsetSet(mixed $offset, mixed $value): void
+    #[\ReturnTypeWillChange]
+    public function offsetSet($offset, $value)
     {
-        $this->__set($offset, $value);
+        return $this->__set($offset, $value);
     }
 
     /**
      * @param mixed $offset
      */
-    public function offsetUnset($offset): void
+    #[\ReturnTypeWillChange]
+    public function offsetUnset($offset)
     {
         unset($this->_data[$offset]);
     }

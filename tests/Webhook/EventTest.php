@@ -1,6 +1,6 @@
 <?php
 
-namespace XeroPHP\tests;
+namespace XeroPHP\Tests\Webhook;
 
 use XeroPHP\Webhook;
 use XeroPHP\Application;
@@ -15,24 +15,16 @@ class EventTest extends \PHPUnit_Framework_TestCase
 
     protected function setUp()
     {
-        $config = [
-            'oauth' => [
-                'callback' => 'oob',
-                'consumer_key' => 'k',
-                'consumer_secret' => 's',
-                'rsa_private_key' => 'file://certs/private.pem',
-                'rsa_public_key' => 'file://certs/public.pem',
-            ],
+        $this->application = new Application('token', 'tenantId');
+        $this->application->setConfig([
             'webhook' => [
                 'signing_key' => 'test_key',
-            ],
-        ];
-
-        $this->application = new PrivateApplication($config);
+            ]
+        ]);
     }
 
     /**
-     * @expectedException \XeroPHP\Application\Exception
+     * @expectedException \XeroPHP\Exception
      */
     public function testMalformedPayload()
     {
@@ -114,7 +106,7 @@ class EventTest extends \PHPUnit_Framework_TestCase
 
     public function testGetEventClass()
     {
-        $payload = '{"events":[{"resourceUrl":"https://api.xero.com/api.xro/2.0/Invoices/44aa0707-f718-4f1c-8d53-f2da9ca59533","resourceId":"44aa0707-f718-4f1c-8d53-f2da9ca59533","eventDateUtc":"2018-02-09T09:18:28.917Z","eventType":"UPDATE","eventCategory":"INVOICE","tenantId":"e629a03c-7ffe-4913-bd94-ff2fdb36a702","tenantType":"ORGANISATION"},{"resourceUrl":"https://api.xero.com/api.xro/2.0/Invoices/44aa0707-f718-4f1c-8d53-f2da9ca59533","resourceId":"44aa0707-f718-4f1c-8d53-f2da9ca59533","eventDateUtc":"2018-02-09T09:18:28.917Z","eventType":"UPDATE","eventCategory":"CONTACT","tenantId":"e629a03c-7ffe-4913-bd94-ff2fdb36a702","tenantType":"ORGANISATION"},{"resourceUrl":"https://api.xero.com/api.xro/2.0/Invoices/44aa0707-f718-4f1c-8d53-f2da9ca59533","resourceId":"44aa0707-f718-4f1c-8d53-f2da9ca59533","eventDateUtc":"2018-02-09T09:18:28.917Z","eventType":"UPDATE","eventCategory":"FUTURE_ENDPOINT","tenantId":"e629a03c-7ffe-4913-bd94-ff2fdb36a702","tenantType":"ORGANISATION"}],"firstEventSequence": 2,"lastEventSequence": 3, "entropy": "GATSEZXWIBPBRNQOTMOH"}';
+        $payload = '{"events":[{"resourceUrl":"https://api.xero.com/api.xro/2.0/Invoices/44aa0707-f718-4f1c-8d53-f2da9ca59533","resourceId":"44aa0707-f718-4f1c-8d53-f2da9ca59533","eventDateUtc":"2018-02-09T09:18:28.917Z","eventType":"UPDATE","eventCategory":"INVOICE","tenantId":"e629a03c-7ffe-4913-bd94-ff2fdb36a702","tenantType":"ORGANISATION"},{"resourceUrl":"https://api.xero.com/api.xro/2.0/Invoices/44aa0707-f718-4f1c-8d53-f2da9ca59533","resourceId":"44aa0707-f718-4f1c-8d53-f2da9ca59533","eventDateUtc":"2018-02-09T09:18:28.917Z","eventType":"UPDATE","eventCategory":"CONTACT","tenantId":"e629a03c-7ffe-4913-bd94-ff2fdb36a702","tenantType":"ORGANISATION"},{"resourceUrl":"https://api.xero.com/api.xro/2.0/Subscriptions/44aa0707-f718-4f1c-8d53-f2da9ca59534","resourceId":"44aa0707-f718-4f1c-8d53-f2da9ca59534","eventDateUtc":"2018-02-09T09:18:28.917Z","eventType":"CREATE","eventCategory":"SUBSCRIPTION","tenantId":"e629a03c-7ffe-4913-bd94-ff2fdb36a702","tenantType":"ORGANISATION"},{"resourceUrl":"https://api.xero.com/api.xro/2.0/Invoices/44aa0707-f718-4f1c-8d53-f2da9ca59533","resourceId":"44aa0707-f718-4f1c-8d53-f2da9ca59533","eventDateUtc":"2018-02-09T09:18:28.917Z","eventType":"UPDATE","eventCategory":"INVOICE","tenantId":"e629a03c-7ffe-4913-bd94-ff2fdb36a702","tenantType":"ORGANISATION"}],"firstEventSequence": 2,"lastEventSequence": 3, "entropy": "GATSEZXWIBPBRNQOTMOH"}';
         $webhook = new Webhook($this->application, $payload);
 
         $events = $webhook->getEvents();
@@ -127,6 +119,9 @@ class EventTest extends \PHPUnit_Framework_TestCase
 
         $evt = array_pop($events);
         $this->assertSame(\XeroPHP\Models\Accounting\Invoice::class, $evt->getEventClass());
+
+        $evt = array_pop($events);
+        $this->assertSame(\XeroPHP\Models\Subscription::class, $evt->getEventClass());
     }
 
     public function testGetTenantId()

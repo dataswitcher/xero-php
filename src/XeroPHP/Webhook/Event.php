@@ -2,8 +2,9 @@
 
 namespace XeroPHP\Webhook;
 
-use XeroPHP\Remote\URL;
+use XeroPHP\Remote\Exception\RequiredFieldException;
 use XeroPHP\Remote\Request;
+use XeroPHP\Remote\URL;
 
 /**
  * Represents a single event within a webhook.
@@ -56,7 +57,7 @@ class Event
      * @param \XeroPHP\Webhook $webhook
      * @param array $event event details
      *
-     * @throws \XeroPHP\Application\Exception if the provided payload is malformed
+     * @throws \XeroPHP\Exception if the provided payload is malformed
      */
     public function __construct($webhook, $event)
     {
@@ -72,8 +73,12 @@ class Event
         ];
 
         foreach ($fields as $required) {
-            if (! isset($event[$required])) {
-                throw new \XeroPHP\Application\Exception("The event payload was malformed; missing required field {$required}");
+            if (!isset($event[$required])) {
+                throw new RequiredFieldException(
+                    get_class($this), 
+                    $required, 
+                    "The event payload was malformed; missing required field {$required}"
+                );
             }
 
             $this->{$required} = $event[$required];
@@ -149,8 +154,9 @@ class Event
         if ($this->getEventCategory() === 'CONTACT') {
             return \XeroPHP\Models\Accounting\Contact::class;
         }
-
-        
+        if ($this->getEventCategory() === 'SUBSCRIPTION') {
+            return \XeroPHP\Models\Subscription::class;
+        }
     }
 
     /**
@@ -176,6 +182,7 @@ class Event
      *                                          Useful if you have separate instances with different oauth tokens based on the tenant
      *
      * @return array|\XeroPHP\Remote\Model If the event category is known, returns the model, otherwise, returns the resource as an array
+     * @throws \XeroPHP\Remote\Exception
      */
     public function getResource($application = null)
     {

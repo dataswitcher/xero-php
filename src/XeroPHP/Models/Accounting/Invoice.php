@@ -8,7 +8,7 @@ use XeroPHP\Traits\PDFTrait;
 use XeroPHP\Traits\HistoryTrait;
 use XeroPHP\Traits\SendEmailTrait;
 use XeroPHP\Traits\AttachmentTrait;
-use XeroPHP\Models\Accounting\Invoice\LineItem;
+use XeroPHP\Models\Accounting\LineItem;
 
 class Invoice extends Remote\Model
 {
@@ -108,13 +108,13 @@ class Invoice extends Remote\Model
     /**
      * Shown on sales invoices (Accounts Receivable) when this has been set.
      *
-     * @property string ExpectedPaymentDate
+     * @property \DateTimeInterface ExpectedPaymentDate
      */
 
     /**
      * Shown on bills (Accounts Payable) when this has been set.
      *
-     * @property string PlannedPaymentDate
+     * @property \DateTimeInterface PlannedPaymentDate
      */
 
     /**
@@ -146,6 +146,12 @@ class Invoice extends Remote\Model
      * Xero generated unique identifier for invoice.
      *
      * @property string InvoiceID
+     */
+
+    /**
+     * See RepeatingInvoices.
+     *
+     * @property string RepeatingInvoiceID
      */
 
     /**
@@ -223,10 +229,19 @@ class Invoice extends Remote\Model
 
     const INVOICE_STATUS_VOIDED = 'VOIDED';
 
+    /**
+     * @deprecated Use \XeroPHP\Models\Accounting\LineItem::TYPE_EXCLUSIVE instead.
+     */
     const LINEAMOUNT_TYPE_EXCLUSIVE = 'Exclusive';
 
+    /**
+     * @deprecated Use \XeroPHP\Models\Accounting\LineItem::TYPE_INCLUSIVE instead.
+     */
     const LINEAMOUNT_TYPE_INCLUSIVE = 'Inclusive';
 
+    /**
+     * @deprecated Use \XeroPHP\Models\Accounting\LineItem::TYPE_NOTAX instead.
+     */
     const LINEAMOUNT_TYPE_NOTAX = 'NoTax';
 
     /**
@@ -262,7 +277,7 @@ class Invoice extends Remote\Model
     /**
      * Get the stem of the API (core.xro) etc.
      *
-     * @return string|null
+     * @return string
      */
     public static function getAPIStem()
     {
@@ -296,7 +311,7 @@ class Invoice extends Remote\Model
         return [
             'Type' => [true, self::PROPERTY_TYPE_ENUM, null, false, false],
             'Contact' => [true, self::PROPERTY_TYPE_OBJECT, 'Accounting\\Contact', false, false],
-            'LineItems' => [true, self::PROPERTY_TYPE_OBJECT, 'Accounting\\Invoice\\LineItem', true, false],
+            'LineItems' => [true, self::PROPERTY_TYPE_OBJECT, 'Accounting\\LineItem', true, false],
             'Date' => [false, self::PROPERTY_TYPE_DATE, '\\DateTimeInterface', false, false],
             'DueDate' => [false, self::PROPERTY_TYPE_DATE, '\\DateTimeInterface', false, false],
             'LineAmountTypes' => [false, self::PROPERTY_TYPE_ENUM, null, false, false],
@@ -308,13 +323,14 @@ class Invoice extends Remote\Model
             'CurrencyRate' => [false, self::PROPERTY_TYPE_FLOAT, null, false, false],
             'Status' => [false, self::PROPERTY_TYPE_ENUM, null, false, false],
             'SentToContact' => [false, self::PROPERTY_TYPE_BOOLEAN, null, false, false],
-            'ExpectedPaymentDate' => [false, self::PROPERTY_TYPE_STRING, null, false, false],
-            'PlannedPaymentDate' => [false, self::PROPERTY_TYPE_STRING, null, false, false],
+            'ExpectedPaymentDate' => [false, self::PROPERTY_TYPE_DATE, '\\DateTimeInterface', false, false],
+            'PlannedPaymentDate' => [false, self::PROPERTY_TYPE_DATE, '\\DateTimeInterface', false, false],
             'SubTotal' => [false, self::PROPERTY_TYPE_FLOAT, null, false, false],
             'TotalTax' => [false, self::PROPERTY_TYPE_FLOAT, null, false, false],
             'Total' => [false, self::PROPERTY_TYPE_FLOAT, null, false, false],
             'TotalDiscount' => [false, self::PROPERTY_TYPE_FLOAT, null, false, false],
             'InvoiceID' => [false, self::PROPERTY_TYPE_STRING, null, false, false],
+            'RepeatingInvoiceID' => [false, self::PROPERTY_TYPE_STRING, null, false, false],
             'HasAttachments' => [false, self::PROPERTY_TYPE_BOOLEAN, null, false, false],
             'Payments' => [false, self::PROPERTY_TYPE_OBJECT, 'Accounting\\Payment', true, false],
             'Prepayments' => [false, self::PROPERTY_TYPE_OBJECT, 'Accounting\\Prepayment', true, false],
@@ -635,7 +651,7 @@ class Invoice extends Remote\Model
     }
 
     /**
-     * @return string
+     * @return \DateTimeInterface
      */
     public function getExpectedPaymentDate()
     {
@@ -643,7 +659,7 @@ class Invoice extends Remote\Model
     }
 
     /**
-     * @param string $value
+     * @param \DateTimeInterface $value
      *
      * @return Invoice
      */
@@ -656,7 +672,7 @@ class Invoice extends Remote\Model
     }
 
     /**
-     * @return string
+     * @return \DateTimeInterface
      */
     public function getPlannedPaymentDate()
     {
@@ -664,7 +680,7 @@ class Invoice extends Remote\Model
     }
 
     /**
-     * @param string $value
+     * @param \DateTimeInterface $value
      *
      * @return Invoice
      */
@@ -725,6 +741,27 @@ class Invoice extends Remote\Model
     {
         $this->propertyUpdated('InvoiceID', $value);
         $this->_data['InvoiceID'] = $value;
+
+        return $this;
+    }
+
+    /**
+     * @return string
+     */
+    public function getRepeatingInvoiceID()
+    {
+        return $this->_data['RepeatingInvoiceID'];
+    }
+
+    /**
+     * @param string $value
+     *
+     * @return Invoice
+     */
+    public function setRepeatingInvoiceID($value)
+    {
+        $this->propertyUpdated('RepeatingInvoiceID', $value);
+        $this->_data['RepeatingInvoiceID'] = $value;
 
         return $this;
     }

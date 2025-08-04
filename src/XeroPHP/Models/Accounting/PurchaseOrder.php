@@ -6,7 +6,7 @@ use XeroPHP\Remote;
 use XeroPHP\Traits\PDFTrait;
 use XeroPHP\Traits\HistoryTrait;
 use XeroPHP\Traits\AttachmentTrait;
-use XeroPHP\Models\Accounting\PurchaseOrder\LineItem;
+use XeroPHP\Models\Accounting\LineItem;
 
 class PurchaseOrder extends Remote\Model
 {
@@ -205,7 +205,7 @@ class PurchaseOrder extends Remote\Model
     /**
      * Get the stem of the API (core.xro) etc.
      *
-     * @return string|null
+     * @return string
      */
     public static function getAPIStem()
     {
@@ -238,14 +238,13 @@ class PurchaseOrder extends Remote\Model
     {
         return [
             'Contact' => [true, self::PROPERTY_TYPE_OBJECT, 'Accounting\\Contact', false, false],
-            'LineItems' => [true, self::PROPERTY_TYPE_OBJECT, 'Accounting\\PurchaseOrder\\LineItem', true, false],
+            'LineItems' => [true, self::PROPERTY_TYPE_OBJECT, 'Accounting\\LineItem', true, false],
             'Date' => [false, self::PROPERTY_TYPE_DATE, '\\DateTimeInterface', false, false],
             'DeliveryDate' => [false, self::PROPERTY_TYPE_DATE, '\\DateTimeInterface', false, false],
             'LineAmountTypes' => [false, self::PROPERTY_TYPE_ENUM, null, false, false],
             'PurchaseOrderNumber' => [false, self::PROPERTY_TYPE_STRING, null, false, false],
             'Reference' => [false, self::PROPERTY_TYPE_STRING, null, false, false],
             'BrandingThemeID' => [false, self::PROPERTY_TYPE_STRING, null, false, false],
-            'CurrencyCode' => [false, self::PROPERTY_TYPE_STRING, null, false, false],
             'Status' => [false, self::PROPERTY_TYPE_ENUM, null, false, false],
             'SentToContact' => [false, self::PROPERTY_TYPE_BOOLEAN, null, false, false],
             'DeliveryAddress' => [false, self::PROPERTY_TYPE_STRING, null, false, false],
@@ -254,6 +253,7 @@ class PurchaseOrder extends Remote\Model
             'DeliveryInstructions' => [false, self::PROPERTY_TYPE_STRING, null, false, false],
             'ExpectedArrivalDate' => [false, self::PROPERTY_TYPE_DATE, '\\DateTimeInterface', false, false],
             'PurchaseOrderID' => [false, self::PROPERTY_TYPE_STRING, null, false, false],
+            'CurrencyCode' => [false, self::PROPERTY_TYPE_STRING, null, false, false],
             'CurrencyRate' => [false, self::PROPERTY_TYPE_FLOAT, null, false, false],
             'SubTotal' => [false, self::PROPERTY_TYPE_FLOAT, null, false, false],
             'TotalTax' => [false, self::PROPERTY_TYPE_FLOAT, null, false, false],
@@ -635,6 +635,19 @@ class PurchaseOrder extends Remote\Model
     public function getCurrencyRate()
     {
         return $this->_data['CurrencyRate'];
+    }
+
+    /**
+     * @param string $value
+     *
+     * @return PurchaseOrder
+     */
+    public function setCurrencyRate($value)
+    {
+        $this->propertyUpdated('CurrencyRate', $value);
+        $this->_data['CurrencyRate'] = $value;
+
+        return $this;
     }
 
     /**
